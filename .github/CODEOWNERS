@@ -1,20 +1,18 @@
 # Code owners are requested for review automatically on any pull request
 # that touches the matching paths.
-#
-# TODO: replace @OWNER with the GitHub username before pushing to the remote.
 
 # Default owner for everything in the repository
-*                           @OWNER
+*                           @IsuraViranga
 
 # Architecture decisions and security documentation carry extra weight
-/docs/adr/                  @OWNER
-/docs/security/             @OWNER
+/docs/adr/                  @IsuraViranga
+/docs/security/             @IsuraViranga
 
 # Infrastructure and pipelines can break every environment at once
-/infrastructure/            @OWNER
-/deployment/                @OWNER
-/.github/workflows/         @OWNER
+/infrastructure/            @IsuraViranga
+/deployment/                @IsuraViranga
+/.github/workflows/         @IsuraViranga
 
 # Repository governance
-/CONTRIBUTING.md            @OWNER
-/CODEOWNERS                 @OWNER
+/CONTRIBUTING.md            @IsuraViranga
+/CODEOWNERS                 @IsuraViranga

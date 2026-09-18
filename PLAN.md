@@ -623,8 +623,8 @@ Pull Request ─► lint ─► unit tests ─► integration tests (Testcontain
 | Phase | Part | Description | Status |
 |---|---|---|---|
 | 0 | 1 | Repository skeleton, governance, folder structure | Complete |
-| 0 | 2 | Architecture Decision Records (ADR-0001 to 0003) + C4 diagrams | Next |
-| 0 | 3 | Maven parent POM, module skeleton, Spotless/Checkstyle | Pending |
+| 0 | 2 | Architecture Decision Records (ADR-0001 to 0003) + C4 diagrams | Complete |
+| 0 | 3 | Maven parent POM, module skeleton, Spotless/Checkstyle | Next |
 | 0 | 4 | Docker Compose local environment | Pending |
 | 0 | 5 | Spring Boot bootstrap app, health endpoint, Flyway baseline, ArchUnit | Pending |
 | 0 | 6 | Next.js app calling the health endpoint | Pending |
