@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.opspilot</groupId>
+        <artifactId>platform</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>platform-app</artifactId>
+    <name>OpsPilot :: Application</name>
+    <description>Composition root. The only module that knows about every other module, the only
+        one that produces an executable jar, and the home of the ArchUnit tests that
+        enforce the boundaries between all the others.</description>
+
+    <dependencies>
+        <!-- Every domain module. This is the one place the full list appears. -->
+        <dependency>
+            <groupId>com.opspilot</groupId>
+            <artifactId>platform-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.opspilot</groupId>
+            <artifactId>platform-identity</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.opspilot</groupId>
+            <artifactId>platform-servicedesk</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.opspilot</groupId>
+            <artifactId>platform-sla</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.opspilot</groupId>
+            <artifactId>platform-workflow</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.opspilot</groupId>
+            <artifactId>platform-asset</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.opspilot</groupId>
+            <artifactId>platform-knowledge</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.opspilot</groupId>
+            <artifactId>platform-audit</artifactId>
+        </dependency>
+
+        <!--
+          ArchUnit lives here because boundary rules are only meaningful when every
+          module is on the same classpath. Added in Part 5 of Phase 0.
+        -->
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit-junit5</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Produces the executable fat jar and the OCI image build. -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

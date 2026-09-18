@@ -111,7 +111,7 @@ Locked before the first line of production code. This is the "enterprise process
 
 | Language | Formatter | Linter | Static analysis |
 |---|---|---|---|
-| Java | Spotless + Google Java Format | Checkstyle | SonarQube, SpotBugs, ArchUnit |
+| Java | Spotless + Palantir Java Format | Checkstyle | SonarQube, SpotBugs, ArchUnit |
 | TypeScript | Prettier | ESLint (strict, `@typescript-eslint`) | `tsc --noEmit`, SonarQube |
 | Python | Black | Ruff | mypy, SonarQube |
 
@@ -180,9 +180,11 @@ All versions are current LTS/stable as of the plan date, so the project will not
 
 ### Backend
 
-- Java 21 (LTS), Spring Boot 3.5.x
+- Java 21 (LTS), **Spring Boot 4.1.1** (current GA; the plan originally said 3.5.x, which
+  reached end of open-source support before the build was set up)
 - Spring Security, Spring Data JPA, Spring Validation, Spring Cloud Gateway
-- Maven multi-module build
+- Maven 3.9 multi-module build, driven through the Maven wrapper
+- Lombok + MapStruct, Spotless (Palantir Java Format), Checkstyle, JaCoCo, ArchUnit
 - PostgreSQL 17, Redis 7, Apache Kafka (Redpanda locally)
 - Flyway, MapStruct, Resilience4j
 - JUnit 5, Mockito, Testcontainers, REST Assured, ArchUnit
@@ -624,8 +626,8 @@ Pull Request ─► lint ─► unit tests ─► integration tests (Testcontain
 |---|---|---|---|
 | 0 | 1 | Repository skeleton, governance, folder structure | Complete |
 | 0 | 2 | Architecture Decision Records (ADR-0001 to 0003) + C4 diagrams | Complete |
-| 0 | 3 | Maven parent POM, module skeleton, Spotless/Checkstyle | Next |
-| 0 | 4 | Docker Compose local environment | Pending |
+| 0 | 3 | Maven parent POM, 9-module skeleton, Spotless/Checkstyle/JaCoCo/Enforcer | Complete |
+| 0 | 4 | Docker Compose local environment | Next |
 | 0 | 5 | Spring Boot bootstrap app, health endpoint, Flyway baseline, ArchUnit | Pending |
 | 0 | 6 | Next.js app calling the health endpoint | Pending |
 | 0 | 7 | GitHub Actions CI pipeline | Pending |

@@ -53,7 +53,7 @@ Next.js Portal  ──►  API Gateway  ──►  Platform (Spring Boot, modula
 | Layer | Technology |
 |---|---|
 | Frontend | Next.js 15, React 19, TypeScript, Tailwind, TanStack Query |
-| Backend | Java 21, Spring Boot 3.5, Spring Security, Spring Data JPA, Maven |
+| Backend | Java 21, Spring Boot 4.1, Spring Security, Spring Data JPA, Maven |
 | Data | PostgreSQL 17 (Row-Level Security), Redis 7, Apache Kafka |
 | AI | Python 3.12, FastAPI, Qdrant, sentence-transformers |
 | Infrastructure | Docker, Kubernetes (EKS), Terraform, GitHub Actions |

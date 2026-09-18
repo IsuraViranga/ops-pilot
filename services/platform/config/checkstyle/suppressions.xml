@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suppressions PUBLIC
+        "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+        "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<!--
+  Targeted, justified exceptions to the Checkstyle rules.
+
+  Every entry states WHY. A suppression without a reason is technical debt that
+  nobody can safely remove later, because nobody knows what it was protecting.
+-->
+<suppressions>
+
+    <!--
+      Tests: a test class is documentation of behaviour, so Javadoc on it adds
+      noise rather than meaning. Test methods are also legitimately long when the
+      arrange/act/assert setup is the point of the test.
+    -->
+    <suppress checks="JavadocType|JavadocPackage|SummaryJavadoc|JavadocParagraph"
+              files="[\\/]src[\\/]test[\\/]"/>
+    <suppress checks="MethodLength|MagicNumber" files="[\\/]src[\\/]test[\\/]"/>
+    <suppress checks="ClassFanOutComplexity" files="[\\/]src[\\/]test[\\/]"/>
+
+    <!--
+      Generated sources: MapStruct implementations and anything else emitted by an
+      annotation processor. We do not control their style.
+    -->
+    <suppress checks="[a-zA-Z0-9]*" files="[\\/]target[\\/]"/>
+    <suppress checks="[a-zA-Z0-9]*" files=".*MapperImpl\.java"/>
+
+    <!--
+      Spring configuration classes legitimately reference many types in order to
+      wire them together; that is their entire job, not a design smell.
+    -->
+    <suppress checks="ClassFanOutComplexity" files="[\\/]config[\\/].*Config(uration)?\.java"/>
+
+    <!--
+      The Spring Boot entry point is a framework-mandated shape: a public class
+      with a public static void main, which HideUtilityClassConstructor dislikes.
+    -->
+    <suppress checks="HideUtilityClassConstructor" files=".*Application\.java"/>
+
+</suppressions>

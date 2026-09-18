@@ -142,7 +142,7 @@ Formatting is automated and enforced in CI. Do not argue with the formatter.
 
 | Language | Formatter | Linter | Static analysis |
 |---|---|---|---|
-| Java | Spotless + Google Java Format | Checkstyle | SpotBugs, ArchUnit, SonarQube |
+| Java | Spotless + Palantir Java Format | Checkstyle | SpotBugs, ArchUnit, SonarQube |
 | TypeScript | Prettier | ESLint (strict) | `tsc --noEmit`, SonarQube |
 | Python | Black | Ruff | mypy, SonarQube |
 
