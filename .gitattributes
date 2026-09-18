@@ -1,0 +1,56 @@
+# Normalise line endings across Windows / macOS / Linux.
+# Everything is stored as LF in the repository and checked out natively.
+* text=auto eol=lf
+
+# Windows-only scripts must keep CRLF or they will not run.
+*.bat           text eol=crlf
+*.cmd           text eol=crlf
+*.ps1           text eol=crlf
+mvnw.cmd        text eol=crlf
+
+# Unix scripts must keep LF.
+*.sh            text eol=lf
+mvnw            text eol=lf
+gradlew         text eol=lf
+
+# Explicit text types
+*.java          text diff=java
+*.kt            text
+*.ts            text
+*.tsx           text
+*.js            text
+*.jsx           text
+*.py            text diff=python
+*.sql           text
+*.md            text diff=markdown
+*.yml           text
+*.yaml          text
+*.json          text
+*.xml           text
+*.tf            text
+*.tfvars        text
+*.html          text diff=html
+*.css           text diff=css
+Dockerfile      text
+*.properties    text
+
+# Binary — never diff, never convert line endings
+*.png           binary
+*.jpg           binary
+*.jpeg          binary
+*.gif           binary
+*.ico           binary
+*.webp          binary
+*.pdf           binary
+*.jar           binary
+*.war           binary
+*.zip           binary
+*.gz            binary
+*.woff          binary
+*.woff2         binary
+*.ttf           binary
+
+# Generated files — collapse in GitHub diffs
+package-lock.json   linguist-generated=true
+pnpm-lock.yaml      linguist-generated=true
+poetry.lock         linguist-generated=true
