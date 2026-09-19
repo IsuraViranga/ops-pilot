@@ -1,0 +1,142 @@
+# OpsPilot local development environment.
+#
+#   docker compose up -d        start everything
+#   docker compose ps           check health
+#   docker compose logs -f      follow logs
+#   docker compose down         stop, keeping data
+#   docker compose down -v      stop and DELETE all data
+#
+# Image tags are pinned to exact versions. "latest" means the environment changes
+# underneath you without warning, which is the opposite of what a dev environment is for.
+#
+# Host ports default to the 5xxxx range because 5432, 6379 and 1025 are commonly
+# already taken by locally installed services. Override any of them in .env.
+
+name: opspilot
+
+services:
+
+  postgres:
+    image: postgres:17.11-alpine
+    container_name: opspilot-postgres
+    restart: unless-stopped
+    environment:
+      # This user is the schema owner and the role Flyway runs as.
+      POSTGRES_DB: ${POSTGRES_DB:-opspilot}
+      POSTGRES_USER: ${POSTGRES_USER:-opspilot_migrator}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required - copy .env.example to .env}
+      # The least-privileged role the application connects as. See ADR-0002.
+      APP_DB_USER: ${APP_DB_USER:-opspilot_app}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?APP_DB_PASSWORD is required - copy .env.example to .env}
+      # Deterministic collation, so ORDER BY behaves the same everywhere.
+      POSTGRES_INITDB_ARGS: "--locale=C --encoding=UTF8"
+    ports:
+      - "${POSTGRES_PORT:-55432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      # Scripts here run once, on first startup, in filename order.
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-opspilot_migrator} -d ${POSTGRES_DB:-opspilot}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    command:
+      # Log every statement and any query over 200ms. Noisy in production,
+      # invaluable locally for spotting N+1 queries early.
+      - "postgres"
+      - "-c"
+      - "log_statement=all"
+      - "-c"
+      - "log_min_duration_statement=200"
+      - "-c"
+      - "max_connections=100"
+    networks:
+      - opspilot
+
+  redis:
+    image: redis:8.8.2-alpine
+    container_name: opspilot-redis
+    restart: unless-stopped
+    # A password locally too: if the app works without one here and needs one in
+    # production, the difference is discovered during deployment rather than now.
+    command:
+      - "redis-server"
+      - "--requirepass"
+      - "${REDIS_PASSWORD:?REDIS_PASSWORD is required - copy .env.example to .env}"
+      - "--appendonly"
+      - "yes"
+      - "--maxmemory"
+      - "256mb"
+      - "--maxmemory-policy"
+      - "noeviction"
+    ports:
+      - "${REDIS_PORT:-56379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    networks:
+      - opspilot
+
+  mailpit:
+    # Catches every outgoing email and shows it in a web inbox. Nothing is
+    # ever delivered, so a bug in a notification template cannot email a real person.
+    image: axllent/mailpit:v1.31.1
+    container_name: opspilot-mailpit
+    restart: unless-stopped
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+      MP_MAX_MESSAGES: 5000
+      MP_DATABASE: /data/mailpit.db
+    ports:
+      - "${MAILPIT_SMTP_PORT:-51025}:1025"   # SMTP - the application sends here
+      - "${MAILPIT_UI_PORT:-58025}:8025"     # Web inbox - you read mail here
+    volumes:
+      - mailpit-data:/data
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - opspilot
+
+  adminer:
+    # Lightweight database browser. Useful for confirming what a migration
+    # actually did, without installing a desktop client.
+    image: adminer:6.0.1
+    container_name: opspilot-adminer
+    restart: unless-stopped
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+      ADMINER_DESIGN: dracula
+    ports:
+      - "${ADMINER_PORT:-58080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - opspilot
+
+volumes:
+  postgres-data:
+    name: opspilot-postgres-data
+  redis-data:
+    name: opspilot-redis-data
+  mailpit-data:
+    name: opspilot-mailpit-data
+
+networks:
+  opspilot:
+    name: opspilot
+    driver: bridge

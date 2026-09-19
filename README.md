@@ -76,22 +76,42 @@ infrastructure/     Terraform modules and environments
 
 ## Getting started
 
-> Not runnable yet — the local environment arrives in Part 4 of Phase 0.
-
 **Prerequisites**
 
 | Tool | Version |
 |---|---|
 | JDK | 21 (Temurin recommended) |
-| Node.js | 20 LTS or newer |
-| Docker Desktop | latest |
-| Python | 3.12 (Phase 5 onwards) |
+| Docker Desktop | 28 or newer |
+| Node.js | 20 LTS or newer (Phase 0 Part 6 onwards) |
+| Python | 3.12+ (Phase 5 onwards) |
+
+**1. Start the backing services**
 
 ```bash
-git clone <repository-url> ops-pilot
-cd ops-pilot
-# Instructions land here as each part is built.
+cd deployment/docker
+cp .env.example .env
+docker compose up -d
+docker compose ps          # all four should report (healthy)
 ```
+
+| | |
+|---|---|
+| Mail inbox | <http://localhost:58025> |
+| Database browser | <http://localhost:58080> |
+
+See [deployment/docker/README.md](deployment/docker/README.md) for details.
+
+**2. Build the backend**
+
+```bash
+cd services/platform
+./mvnw clean verify        # on Windows: mvnw.cmd clean verify
+```
+
+See [services/platform/README.md](services/platform/README.md) for the module layout
+and what each quality gate enforces.
+
+> The application does not serve requests yet — that arrives in Part 5 of Phase 0.
 
 ---
 
