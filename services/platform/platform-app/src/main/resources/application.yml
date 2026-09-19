@@ -1,0 +1,200 @@
+# ---------------------------------------------------------------------------
+# Base configuration - applies to every environment.
+#
+# Anything environment-specific is either a ${ENV_VAR} with a safe default, or
+# lives in application-<profile>.yml. Nothing here should need editing to deploy.
+# ---------------------------------------------------------------------------
+
+spring:
+  application:
+    name: opspilot-platform
+
+  # Running with no profile is almost always a local developer, so make that work.
+  profiles:
+    default: local
+
+  # --- Datasource ---------------------------------------------------------
+  # The application connects as the least-privileged role. It is NOSUPERUSER and
+  # NOBYPASSRLS, so Row-Level Security applies to it. See ADR-0002.
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:55432/opspilot}
+    username: ${DB_USERNAME:opspilot_app}
+    password: ${DB_PASSWORD:local_app_pw}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      pool-name: opspilot-pool
+      maximum-pool-size: ${DB_POOL_MAX:10}
+      minimum-idle: ${DB_POOL_MIN:2}
+      connection-timeout: 10000      # fail fast rather than queue requests
+      validation-timeout: 5000
+      idle-timeout: 300000
+      max-lifetime: 1200000          # under any proxy or RDS idle timeout
+      leak-detection-threshold: 30000
+
+  # --- Schema migrations --------------------------------------------------
+  # Flyway connects as the MIGRATOR role, not the application role. The running
+  # application therefore has no privilege to alter the schema at all: structural
+  # change goes through a reviewed migration or it does not happen.
+  flyway:
+    enabled: true
+    url: ${DB_URL:jdbc:postgresql://localhost:55432/opspilot}
+    user: ${DB_MIGRATION_USERNAME:opspilot_migrator}
+    password: ${DB_MIGRATION_PASSWORD:local_migrator_pw}
+    locations: classpath:db/migration
+    schemas: public
+    validate-on-migrate: true
+    # A checksum mismatch means a migration was edited after it ran somewhere.
+    # Fail loudly - silently repairing hides a real divergence between environments.
+    clean-disabled: true
+    baseline-on-migrate: false
+    out-of-order: false
+
+  # --- JPA ----------------------------------------------------------------
+  jpa:
+    # NEVER 'update' or 'create'. Hibernate verifies that the schema Flyway
+    # produced matches the entities, and refuses to start if it does not.
+    hibernate:
+      ddl-auto: validate
+    # Lazy loading outside a transaction is a source of N+1 queries and of
+    # exceptions thrown while the response is being serialised.
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 50
+          time_zone: UTC
+        order_inserts: true
+        order_updates: true
+        query:
+          fail_on_pagination_over_collection_fetch: true
+          in_clause_parameter_padding: true
+
+  # --- Redis --------------------------------------------------------------
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:56379}
+      password: ${REDIS_PASSWORD:local_redis_pw}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          enabled: true
+          max-active: 16
+          max-idle: 8
+          min-idle: 2
+
+  # --- Mail ---------------------------------------------------------------
+  # Locally this is Mailpit: nothing is delivered, everything is visible at
+  # http://localhost:58025. In production it is Amazon SES.
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:51025}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_SMTP_AUTH:false}
+          starttls:
+            enable: ${MAIL_SMTP_TLS:false}
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+  # Spring Boot 4 ships Jackson 3. Dates already serialise as ISO-8601 by
+  # default there, so the old write-dates-as-timestamps setting is both gone
+  # and unnecessary.
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      fail-on-empty-beans: false
+    deserialization:
+      fail-on-unknown-properties: false
+
+  # Graceful shutdown: finish in-flight requests before the process exits.
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+  threads:
+    virtual:
+      enabled: true
+
+# ---------------------------------------------------------------------------
+server:
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+  # Never leak internals in an error response. Real diagnostics go to the logs,
+  # correlated by request id.
+  error:
+    include-message: never
+    include-binding-errors: never
+    include-stacktrace: never
+    include-exception: false
+  # Request size limits, so a malformed or hostile request cannot exhaust memory.
+  tomcat:
+    max-http-form-post-size: 2MB
+    max-swallow-size: 2MB
+    connection-timeout: 20s
+  max-http-request-header-size: 16KB
+
+# ---------------------------------------------------------------------------
+# Actuator
+#
+# Only what is needed is exposed. /actuator/health is the load balancer and
+# Kubernetes probe target; /actuator/prometheus is scraped by Prometheus.
+# ---------------------------------------------------------------------------
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: ${HEALTH_SHOW_DETAILS:when-authorized}
+      show-components: always
+      probes:
+        enabled: true
+      group:
+        # Kubernetes liveness: is the process alive? A failing database must NOT
+        # fail this, or Kubernetes restarts a healthy pod during a database blip.
+        liveness:
+          include: livenessState,ping
+        # Kubernetes readiness: can this pod serve traffic? Without its database
+        # or Redis it cannot, so it should be taken out of the load balancer.
+        readiness:
+          include: readinessState,db,redis
+  health:
+    diskspace:
+      enabled: true
+      threshold: 500MB
+    mail:
+      # Opening an SMTP connection on every health check is wasteful, and mail
+      # being down is not a reason to take the whole application out of service.
+      enabled: false
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  observations:
+    key-values:
+      application: ${spring.application.name}
+  info:
+    env:
+      enabled: true
+    java:
+      enabled: true
+    os:
+      enabled: true
+
+info:
+  application:
+    name: OpsPilot Platform
+    description: Multi-tenant enterprise service management platform
+
+# ---------------------------------------------------------------------------
+logging:
+  level:
+    root: INFO
+    com.opspilot: ${LOG_LEVEL_APP:INFO}
+    org.springframework.web: INFO
+    org.hibernate.SQL: ${LOG_LEVEL_SQL:INFO}

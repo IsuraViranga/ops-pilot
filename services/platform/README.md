@@ -39,6 +39,12 @@ Dependencies flow one way only: domain modules depend on `platform-common`, and
 
 ## Common commands
 
+The backing services must be running first:
+
+```bash
+cd ../../deployment/docker && docker compose up -d
+```
+
 ```bash
 # Full build with every quality gate - what CI runs
 ./mvnw clean verify
@@ -60,6 +66,44 @@ Dependencies flow one way only: domain modules depend on `platform-common`, and
 ```
 
 On Windows Command Prompt or PowerShell, use `mvnw.cmd` instead of `./mvnw`.
+
+Once running, the application is at <http://localhost:8080>:
+
+| Endpoint | Purpose |
+|---|---|
+| `/actuator/health` | Overall status with per-component detail |
+| `/actuator/health/liveness` | Kubernetes liveness probe — is the process alive? |
+| `/actuator/health/readiness` | Kubernetes readiness probe — can it serve traffic? |
+| `/actuator/prometheus` | Metrics, scraped in Phase 7 |
+| `/actuator/info` | Build and runtime information |
+
+---
+
+## Database migrations
+
+Flyway owns the schema. Hibernate runs with `ddl-auto: validate`, so it verifies that
+the entities match what the migrations produced and refuses to start if they diverge.
+
+Migrations live in
+[`platform-app/src/main/resources/db/migration`](platform-app/src/main/resources/db/migration)
+and are named `V<n>__<description>.sql` — two underscores, lower_snake_case description.
+
+**Flyway connects as `opspilot_migrator`; the application connects as `opspilot_app`.**
+The running application therefore has no privilege to alter the schema at all. Structural
+change goes through a reviewed migration, or it does not happen:
+
+```
+$ psql -U opspilot_app -c "CREATE TABLE should_fail(id int);"
+ERROR:  permission denied for schema public
+```
+
+Rules:
+
+- **Never edit a migration that has run anywhere.** Flyway stores a checksum; changing an
+  applied file fails validation on every environment that already has it. Write a new one
+- Forward-only. No `undo` migrations — a mistake is corrected by a new migration
+- Breaking changes use expand/contract, so a deploy never requires downtime
+- `clean` is disabled, so `flyway:clean` cannot wipe a database by accident
 
 ---
 

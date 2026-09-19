@@ -1,0 +1,61 @@
+# ---------------------------------------------------------------------------
+# Local development profile.
+#
+# Points at the Docker Compose stack in deployment/docker. The credentials here
+# are the throwaway values from .env.example - they exist on your machine only.
+# Real credentials come from AWS Secrets Manager and are never in a file.
+#
+#   cd deployment/docker && docker compose up -d
+#   cd services/platform && ./mvnw -pl platform-app spring-boot:run
+# ---------------------------------------------------------------------------
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:55432/opspilot
+    username: opspilot_app
+    password: local_app_pw
+
+  flyway:
+    url: jdbc:postgresql://localhost:55432/opspilot
+    user: opspilot_migrator
+    password: local_migrator_pw
+
+  data:
+    redis:
+      host: localhost
+      port: 56379
+      password: local_redis_pw
+
+  mail:
+    host: localhost
+    port: 51025
+
+  jpa:
+    # Readable SQL in the console while developing. Never enabled elsewhere:
+    # it is slow and it prints parameter values into the logs.
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        highlight_sql: true
+
+management:
+  endpoint:
+    health:
+      # Locally we want to see exactly which component is down. In production
+      # this stays 'when-authorized', because component detail is information
+      # an attacker can use.
+      show-details: always
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+logging:
+  level:
+    com.opspilot: DEBUG
+    # Uncomment while diagnosing a query problem:
+    # org.hibernate.SQL: DEBUG
+    # org.hibernate.orm.jdbc.bind: TRACE
+  pattern:
+    console: "%clr(%d{HH:mm:ss.SSS}){faint} %clr(%5p) %clr([%X{correlationId:-}]){yellow} %clr(%-40.40logger{39}){cyan} %m%n%wEx"
