@@ -111,7 +111,27 @@ cd services/platform
 See [services/platform/README.md](services/platform/README.md) for the module layout
 and what each quality gate enforces.
 
-> The application does not serve requests yet — that arrives in Part 5 of Phase 0.
+**3. Run the backend**
+
+```bash
+./mvnw -pl platform-app spring-boot:run
+```
+
+<http://localhost:8080/actuator/health> should report `db` and `redis` as `UP`.
+
+**4. Run the web portal**
+
+```bash
+cd frontend
+cp .env.example .env.local
+npm install
+npm run dev
+```
+
+Open <http://localhost:3000> — the dashboard shows live backend health.
+
+See [frontend/README.md](frontend/README.md) for why the browser never calls Spring
+directly.
 
 ---
 
