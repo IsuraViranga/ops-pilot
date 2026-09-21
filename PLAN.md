@@ -629,8 +629,8 @@ Pull Request ─► lint ─► unit tests ─► integration tests (Testcontain
 | 0 | 3 | Maven parent POM, 9-module skeleton, Spotless/Checkstyle/JaCoCo/Enforcer | Complete |
 | 0 | 4 | Docker Compose local environment (Postgres, Redis, Mailpit, Adminer) | Complete |
 | 0 | 5 | Application config, Flyway baseline, working health endpoint | Complete |
-| 0 | 6 | ArchUnit boundary tests + Testcontainers integration tests | Next |
-| 0 | 7 | Next.js app calling the health endpoint | Pending |
+| 0 | 6 | ArchUnit boundary tests + Testcontainers integration tests | Complete |
+| 0 | 7 | Next.js app calling the health endpoint | Next |
 | 0 | 8 | GitHub Actions CI pipeline | Pending |
 
 ### Notes from Spring Boot 4 migration

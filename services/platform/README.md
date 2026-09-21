@@ -126,6 +126,53 @@ developer running `./mvnw test` should wait a moment, not a coffee break.
 
 ---
 
+## Tests
+
+| Test | Type | Asserts |
+|---|---|---|
+| `ModuleBoundaryTest` | ArchUnit, fast | The five boundary rules from ADR-0001 |
+| `CodingRulesTest` | ArchUnit, fast | No `System.out`, no field injection, no generic exceptions |
+| `PlatformSmokeIT` | Testcontainers | The app starts on real infrastructure and Flyway actually ran |
+| `TenantIsolationIT` | Testcontainers | Row-Level Security genuinely isolates tenants |
+
+### Architecture tests
+
+`ModuleBoundaryTest` is the executable form of ADR-0001. Enforcing boundaries in code
+review does not work — reviewers get tired, and one `@ManyToOne` across a boundary is easy
+to miss and expensive to undo. A violation produces a failure naming the ADR:
+
+```
+Architecture Violation - Rule 'no classes that reside in a package
+'com.opspilot.platform.*.domain..' should depend on classes that reside in
+'org.springframework..', because domain logic must be testable without a
+Spring context (ADR-0001)' was violated (1 times):
+Class <com.opspilot.platform.sla.domain.SlaClock> is annotated with
+<org.springframework.stereotype.Component>
+```
+
+Maven modules are the first line of defence — a module physically cannot compile against a
+module it does not declare. ArchUnit is the second: it catches violations *within* the
+dependencies a module legitimately has.
+
+### Integration tests
+
+Real PostgreSQL and Redis containers, at the exact versions in
+[docker-compose.yml](../../deployment/docker/docker-compose.yml). **Never H2** — it has no
+Row-Level Security, no `citext` and no JSONB, so passing against it would prove nothing.
+
+Containers are static and started once per test run, then shared by every test class.
+Per-class containers would add roughly five seconds each, which is how integration suites
+end up being skipped.
+
+`TenantIsolationIT` runs as the real `opspilot_app` role, created `NOBYPASSRLS` by
+[testcontainers-init.sql](platform-app/src/test/resources/db/testcontainers-init.sql). That
+detail is the whole test: the same assertions running as a superuser would pass while
+proving nothing, because a superuser silently ignores RLS policies.
+
+> **Requires Docker.** `./mvnw test` runs without it; `./mvnw verify` does not.
+
+---
+
 ## Formatting
 
 Formatting is not a matter of opinion here — **Palantir Java Format** decides, and Spotless

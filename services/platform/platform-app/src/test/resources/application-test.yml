@@ -1,0 +1,24 @@
+# Integration test profile.
+#
+# Connection settings are not here: Testcontainers assigns random ports, so they
+# are injected at runtime by AbstractIntegrationTest via @DynamicPropertySource.
+
+spring:
+  # No SMTP server in tests. Mail health is disabled in the base configuration,
+  # and nothing sends mail yet, so this is never contacted.
+  mail:
+    host: localhost
+    port: 1025
+
+management:
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    root: WARN
+    com.opspilot: INFO
+    org.testcontainers: WARN
+    com.github.dockerjava: WARN
+    org.flywaydb: INFO

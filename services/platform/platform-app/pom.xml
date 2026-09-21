@@ -128,6 +128,22 @@
             <groupId>com.tngtech.archunit</groupId>
             <artifactId>archunit-junit5</artifactId>
         </dependency>
+
+        <!--
+          Integration tests run against real PostgreSQL and Redis containers.
+          Never H2: a database you do not deploy gives you false confidence,
+          and none of Row-Level Security, JSONB or citext exists there at all.
+        -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers-junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers-postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

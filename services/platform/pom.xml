@@ -54,6 +54,8 @@
         <!-- Library versions not managed by the Spring Boot BOM -->
         <archunit.version>1.5.0</archunit.version>
         <mapstruct.version>1.6.3</mapstruct.version>
+        <!-- Spring Boot 4 no longer manages Testcontainers, so its BOM is imported below. -->
+        <testcontainers.version>2.0.5</testcontainers.version>
 
         <!-- Build plugin versions - pinned so the build is reproducible -->
         <spotless.version>3.10.2</spotless.version>
@@ -115,6 +117,13 @@
             </dependency>
 
             <!-- Third-party not covered by the Spring Boot BOM -->
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers-bom</artifactId>
+                <version>${testcontainers.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <dependency>
                 <groupId>org.mapstruct</groupId>
                 <artifactId>mapstruct</artifactId>
