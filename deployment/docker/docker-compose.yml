@@ -17,7 +17,7 @@ name: opspilot
 services:
 
   postgres:
-    image: postgres:17.11-alpine
+    image: postgres:18.4-alpine
     container_name: opspilot-postgres
     restart: unless-stopped
     environment:
