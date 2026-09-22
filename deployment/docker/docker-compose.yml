@@ -56,7 +56,7 @@ services:
       - opspilot
 
   redis:
-    image: redis:8.8.2-alpine
+    image: redis:8.10.0-alpine
     container_name: opspilot-redis
     restart: unless-stopped
     # A password locally too: if the app works without one here and needs one in
