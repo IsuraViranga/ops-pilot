@@ -4,12 +4,25 @@
 # Updates are grouped: sixteen separate pull requests for sixteen patch bumps
 # is how people start ignoring Dependabot entirely.
 
+# Dependabot re-scans on the schedule below (and once immediately whenever this
+# file changes). It does NOT scan on every push.
+#
+# What *does* happen on every push to main is a rebase of each open Dependabot
+# pull request, and each rebase is a `synchronize` event that re-runs the
+# workflows for that pull request. With five open pull requests that is roughly
+# ten extra workflow runs per push, which is where the run count comes from.
+#
+# rebase-strategy: disabled stops that. Pull requests stay on the base they were
+# opened against; rebase one deliberately with an `@dependabot rebase` comment,
+# or use the Update branch button, when you are ready to merge it.
+
 version: 2
 
 updates:
   # --- Java backend -------------------------------------------------------
   - package-ecosystem: maven
     directory: /services/platform
+    rebase-strategy: disabled
     schedule:
       interval: weekly
       day: monday
@@ -32,6 +45,7 @@ updates:
   # --- Frontend -----------------------------------------------------------
   - package-ecosystem: npm
     directory: /frontend
+    rebase-strategy: disabled
     schedule:
       interval: weekly
       day: monday
@@ -50,21 +64,28 @@ updates:
         patterns: ["eslint*", "prettier*", "typescript", "tailwindcss", "@tailwindcss/*"]
       minor-and-patch:
         update-types: [minor, patch]
+    # Two major upgrades are blocked upstream by eslint-config-next, so Dependabot
+    # cannot produce a passing pull request for either however often it tries.
+    # Both were reproduced locally before being ignored here, and both should be
+    # revisited when eslint-config-next catches up.
     ignore:
-      # TypeScript 7 is a complete compiler rewrite, and typescript-eslint does not
-      # support it yet:
-      #
-      #   Error: typescript-eslint does not support TS 7.0.
-      #
-      # So the upgrade cannot succeed however often it is proposed. Revisit once
-      # typescript-eslint ships TS 7 support (typescript-eslint#10940).
+      # Error: typescript-eslint does not support TS 7.0.
+      # TypeScript 7 is the compiler rewrite. Tracking: typescript-eslint#10940.
       - dependency-name: typescript
+        update-types: [version-update:semver-major]
+
+      # TypeError: Error while loading rule 'react/display-name':
+      #   contextOrFilename.getFilename is not a function
+      # ESLint 10 removed the old rule context API. The eslint-plugin-react bundled
+      # inside eslint-config-next still uses it, so linting crashes on any file.
+      - dependency-name: eslint
         update-types: [version-update:semver-major]
 
   # --- GitHub Actions -----------------------------------------------------
   # An outdated action is a supply-chain risk as real as an outdated library.
   - package-ecosystem: github-actions
     directory: /
+    rebase-strategy: disabled
     schedule:
       interval: weekly
       day: monday
@@ -87,6 +108,7 @@ updates:
   # with a release plan, not a routine weekly bump.
   - package-ecosystem: docker-compose
     directory: /deployment/docker
+    rebase-strategy: disabled
     schedule:
       interval: weekly
       day: monday
