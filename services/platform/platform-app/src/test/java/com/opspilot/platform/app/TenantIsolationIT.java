@@ -8,7 +8,7 @@ import java.sql.Statement;
 import java.util.UUID;
 
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,15 +33,32 @@ class TenantIsolationIT extends AbstractIntegrationTest {
     private static final UUID TENANT_A = UUID.fromString("aaaaaaaa-0000-0000-0000-000000000001");
     private static final UUID TENANT_B = UUID.fromString("bbbbbbbb-0000-0000-0000-000000000002");
 
+    /**
+     * Guards one-time setup. The probe table lives in the shared container, so it only needs
+     * creating once no matter how many test methods run.
+     */
+    private static boolean probeTableCreated;
+
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
     /**
      * Creates the probe table as the migrator, because the application role deliberately has no
      * privilege to create tables. This mirrors how Flyway will create the real tables.
+     *
+     * <p>Deliberately {@code @BeforeEach} rather than {@code @BeforeAll}. The policy below calls
+     * {@code current_tenant_id()}, which the Flyway baseline creates - and Flyway runs when the
+     * Spring context starts, which JUnit does <em>after</em> {@code @BeforeAll} but <em>before</em>
+     * {@code @BeforeEach}. As {@code @BeforeAll} this passed locally purely because
+     * PlatformSmokeIT happened to run first and booted the context; on Linux the test classes were
+     * ordered differently and it failed with "function current_tenant_id() does not exist".
      */
-    @BeforeAll
-    static void createProbeTable() throws SQLException {
+    @BeforeEach
+    void createProbeTable() throws SQLException {
+        if (probeTableCreated) {
+            return;
+        }
+
         runAsMigrator("""
                 CREATE TABLE tenant_probe (
                     id        int PRIMARY KEY,
@@ -63,11 +80,19 @@ class TenantIsolationIT extends AbstractIntegrationTest {
 
                 GRANT SELECT ON tenant_probe TO opspilot_app;
                 """);
+
+        markProbeTableCreated();
+    }
+
+    private static void markProbeTableCreated() {
+        probeTableCreated = true;
     }
 
     @AfterAll
     static void dropProbeTable() throws SQLException {
+        // Safe as @AfterAll: by now the context has started and the table exists.
         runAsMigrator("DROP TABLE IF EXISTS tenant_probe;");
+        probeTableCreated = false;
     }
 
     @Test

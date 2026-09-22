@@ -20,6 +20,8 @@ import org.testcontainers.utility.DockerImageName;
  *
  * <p>Image versions match deployment/docker/docker-compose.yml exactly. Testing against a
  * different version than you run is a way of discovering incompatibilities in production.
+ * Dependabot cannot see these constants, so a Compose image bump must be applied here in the
+ * same commit.
  *
  * <p>The application connects as {@code opspilot_app}, created NOBYPASSRLS by
  * db/testcontainers-init.sql, while Flyway connects as the migrator. That is the same split

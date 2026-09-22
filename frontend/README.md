@@ -3,12 +3,12 @@
 Next.js 16 enterprise portal. In Phase 0 it renders live backend health; from Phase 1 it
 becomes the ticketing, approvals and admin interface.
 
-| | |
-|---|---|
+|           |                                   |
+| --------- | --------------------------------- |
 | Framework | Next.js 16 (App Router), React 19 |
-| Language | TypeScript, strict |
-| Styling | Tailwind CSS 4 |
-| Quality | ESLint, Prettier, `tsc --noEmit` |
+| Language  | TypeScript, strict                |
+| Styling   | Tailwind CSS 4                    |
+| Quality   | ESLint, Prettier, `tsc --noEmit`  |
 
 ---
 
@@ -50,12 +50,12 @@ Browser  ──►  /api/health  ──►  Spring /actuator/health
 
 This indirection is the point, not an accident.
 
-| Reason | Detail |
-|---|---|
-| **No CORS** | The browser request is same-origin. The backend never has to trust a browser origin, and there is no preflight configuration to get wrong |
-| **Actuator stays private** | In production the management endpoints are not exposed to the internet at all. Only this route is |
-| **Nothing leaks** | Actuator returns disk paths, database vendor, driver versions and Redis version. The route passes on component names and statuses, nothing else |
-| **One place for auth** | When the portal becomes authenticated, the session check lives here rather than in every component |
+| Reason                     | Detail                                                                                                                                          |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| **No CORS**                | The browser request is same-origin. The backend never has to trust a browser origin, and there is no preflight configuration to get wrong       |
+| **Actuator stays private** | In production the management endpoints are not exposed to the internet at all. Only this route is                                               |
+| **Nothing leaks**          | Actuator returns disk paths, database vendor, driver versions and Redis version. The route passes on component names and statuses, nothing else |
+| **One place for auth**     | When the portal becomes authenticated, the session check lives here rather than in every component                                              |
 
 This is the backend-for-frontend pattern, and it is how the rest of the API will be
 consumed as the application grows.
@@ -72,8 +72,8 @@ and contains none of Actuator's `validationQuery`, file paths or version strings
 
 ## Configuration
 
-| Variable | Default | Notes |
-|---|---|---|
+| Variable           | Default                 | Notes                     |
+| ------------------ | ----------------------- | ------------------------- |
 | `OPSPILOT_API_URL` | `http://localhost:8080` | Where Spring is listening |
 
 **No `NEXT_PUBLIC_` prefix, deliberately.** A `NEXT_PUBLIC_` variable is inlined into the

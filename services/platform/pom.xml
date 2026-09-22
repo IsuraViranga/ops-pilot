@@ -357,6 +357,10 @@
                     <excludes>
                         <exclude>**/*IT.java</exclude>
                     </excludes>
+                    <!-- The default, 'filesystem', orders classes differently on Windows
+                         and Linux, so a test that accidentally depends on ordering passes
+                         locally and fails in CI. Alphabetical is the same everywhere. -->
+                    <runOrder>alphabetical</runOrder>
                 </configuration>
             </plugin>
 
@@ -368,6 +372,10 @@
                     <includes>
                         <include>**/*IT.java</include>
                     </includes>
+                    <!-- Same reason as surefire: deterministic across operating systems.
+                         Tests must still not depend on order; this only removes one way
+                         for that mistake to hide until CI. -->
+                    <runOrder>alphabetical</runOrder>
                 </configuration>
                 <executions>
                     <execution>

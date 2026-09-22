@@ -67,6 +67,14 @@ updates:
         patterns: ["*"]
 
   # --- Container images ---------------------------------------------------
+  #
+  # The PostgreSQL and Redis tags here are duplicated in AbstractIntegrationTest,
+  # so that tests run against exactly the version development and production use.
+  # Dependabot can only see the Compose file, so accepting one of these pull
+  # requests means updating the test class in the same commit.
+  #
+  # Major versions are ignored on purpose: moving to PostgreSQL 18 is a migration
+  # with a release plan, not a routine weekly bump.
   - package-ecosystem: docker-compose
     directory: /deployment/docker
     schedule:
@@ -76,3 +84,8 @@ updates:
     labels: [dependencies, infrastructure]
     commit-message:
       prefix: "build"
+    ignore:
+      - dependency-name: postgres
+        update-types: [version-update:semver-major]
+      - dependency-name: redis
+        update-types: [version-update:semver-major]
