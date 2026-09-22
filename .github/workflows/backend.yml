@@ -1,0 +1,107 @@
+name: Backend
+
+# Path-filtered: a frontend-only pull request does not spend six minutes
+# rebuilding Java, and vice versa.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "services/platform/**"
+      - ".github/workflows/backend.yml"
+  pull_request:
+    paths:
+      - "services/platform/**"
+      - ".github/workflows/backend.yml"
+
+# Pushing a fix to an open pull request cancels the superseded run instead of
+# letting both finish.
+concurrency:
+  group: backend-${{ github.ref }}
+  cancel-in-progress: true
+
+# Least privilege. This workflow only needs to read the repository.
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build, test and verify
+    runs-on: ubuntu-latest
+    # Testcontainers pulling images can be slow on a cold cache, but a job still
+    # running after 30 minutes is stuck, not slow.
+    timeout-minutes: 30
+
+    defaults:
+      run:
+        working-directory: services/platform
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+          # Caches ~/.m2/repository keyed on the POM files.
+          cache: maven
+
+      # Runs the whole gate in one command, exactly as a developer does locally:
+      #   Enforcer -> Spotless -> Checkstyle -> compile -> unit tests
+      #   -> integration tests (Testcontainers) -> JaCoCo coverage check
+      #
+      # Docker is available on GitHub-hosted runners, so Testcontainers starts
+      # real PostgreSQL and Redis. No H2 substitution, no skipped tests.
+      #
+      # -Psbom additionally emits a CycloneDX software bill of materials during
+      # the package phase, which the next step scans.
+      - name: Verify
+        run: ./mvnw -B --no-transfer-progress -Psbom verify
+
+      # Scanning the SBOM rather than the source tree is deliberate. Pointing a
+      # scanner at a Maven project makes it resolve every POM from Maven Central
+      # itself, which is slow and gets rate-limited (HTTP 429). The SBOM already
+      # contains the fully resolved tree, so this scan is offline and instant.
+      #
+      # This is not theoretical: it caught three CRITICAL Tomcat authentication
+      # bypasses in the version Spring Boot 4.1.1 pins, before the first push.
+      - name: Scan dependencies for known vulnerabilities
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: sbom
+          scan-ref: services/platform/target/opspilot-sbom.json
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+          format: table
+
+      # Kept regardless of the scan result: knowing exactly what shipped is the
+      # point of an SBOM, and it is most useful when something is later found wrong.
+      - name: Upload SBOM
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: sbom
+          path: services/platform/target/opspilot-sbom.json
+          retention-days: 90
+
+      # Uploaded on failure only. A green build produces nothing worth keeping,
+      # and artifacts on every run would be noise.
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-reports
+          path: |
+            services/platform/**/target/surefire-reports/
+            services/platform/**/target/failsafe-reports/
+          retention-days: 7
+
+      - name: Upload coverage report
+        if: success()
+        uses: actions/upload-artifact@v7
+        with:
+          name: jacoco-coverage
+          path: services/platform/**/target/site/jacoco/
+          retention-days: 7

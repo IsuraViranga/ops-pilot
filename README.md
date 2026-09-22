@@ -1,5 +1,9 @@
 # OpsPilot
 
+[![Backend](https://github.com/IsuraViranga/ops-pilot/actions/workflows/backend.yml/badge.svg)](https://github.com/IsuraViranga/ops-pilot/actions/workflows/backend.yml)
+[![Frontend](https://github.com/IsuraViranga/ops-pilot/actions/workflows/frontend.yml/badge.svg)](https://github.com/IsuraViranga/ops-pilot/actions/workflows/frontend.yml)
+[![Security](https://github.com/IsuraViranga/ops-pilot/actions/workflows/security.yml/badge.svg)](https://github.com/IsuraViranga/ops-pilot/actions/workflows/security.yml)
+
 **AI-Powered Enterprise Service Management Platform**
 
 A multi-tenant IT service management platform — tickets, SLAs, approval workflows, asset
@@ -132,6 +136,33 @@ Open <http://localhost:3000> — the dashboard shows live backend health.
 
 See [frontend/README.md](frontend/README.md) for why the browser never calls Spring
 directly.
+
+---
+
+## Continuous integration
+
+Three workflows, path-filtered so a frontend-only change does not rebuild Java.
+
+| Workflow | Trigger | Does |
+|---|---|---|
+| [backend.yml](.github/workflows/backend.yml) | `services/platform/**` | Enforcer → Spotless → Checkstyle → unit tests → integration tests on real containers → coverage → SBOM → vulnerability scan |
+| [frontend.yml](.github/workflows/frontend.yml) | `frontend/**` | Prettier → ESLint → `tsc --noEmit` → production build |
+| [security.yml](.github/workflows/security.yml) | every PR, plus weekly | Gitleaks over full history, frontend dependency scan, config scan, CodeQL |
+
+Everything CI runs can be run locally with the same commands — there is no CI-only step.
+
+**Dependency scanning uses an SBOM.** The backend build emits a CycloneDX bill of
+materials, and Trivy scans that rather than the source tree. Pointing a scanner at a Maven
+project makes it resolve every POM from Maven Central, which is slow and gets rate-limited.
+The SBOM already holds the resolved tree, so the scan is offline and instant — and the
+artifact is retained for 90 days, so "what exactly shipped in that build?" has an answer.
+
+> The weekly schedule matters more than it looks: dependencies stop changing, but the list
+> of known vulnerabilities does not.
+
+**Notes.** CodeQL is skipped on private repositories, where it needs GitHub Advanced
+Security; it runs automatically if the repository is made public. Gitleaks Action is free
+for personal accounts and requires a licence only for organisation-owned repositories.
 
 ---
 

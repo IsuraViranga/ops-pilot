@@ -1,0 +1,78 @@
+# Dependabot keeps dependencies current so that upgrades arrive as a stream of
+# small, reviewable pull requests rather than one painful jump a year later.
+#
+# Updates are grouped: sixteen separate pull requests for sixteen patch bumps
+# is how people start ignoring Dependabot entirely.
+
+version: 2
+
+updates:
+  # --- Java backend -------------------------------------------------------
+  - package-ecosystem: maven
+    directory: /services/platform
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+    open-pull-requests-limit: 5
+    labels: [dependencies, backend]
+    commit-message:
+      prefix: "build"
+      include: scope
+    groups:
+      spring:
+        patterns: ["org.springframework*"]
+      test-tooling:
+        patterns: ["org.testcontainers*", "com.tngtech.archunit*", "org.assertj*", "org.mockito*"]
+      build-plugins:
+        patterns: ["*maven-plugin*", "com.diffplug.spotless*", "com.puppycrawl.tools*"]
+      minor-and-patch:
+        update-types: [minor, patch]
+
+  # --- Frontend -----------------------------------------------------------
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+    open-pull-requests-limit: 5
+    labels: [dependencies, frontend]
+    commit-message:
+      prefix: "build"
+      include: scope
+    groups:
+      next:
+        patterns: ["next", "eslint-config-next", "@next/*"]
+      react:
+        patterns: ["react", "react-dom", "@types/react", "@types/react-dom"]
+      tooling:
+        patterns: ["eslint*", "prettier*", "typescript", "tailwindcss", "@tailwindcss/*"]
+      minor-and-patch:
+        update-types: [minor, patch]
+
+  # --- GitHub Actions -----------------------------------------------------
+  # An outdated action is a supply-chain risk as real as an outdated library.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+    labels: [dependencies, ci]
+    commit-message:
+      prefix: "ci"
+    groups:
+      actions:
+        patterns: ["*"]
+
+  # --- Container images ---------------------------------------------------
+  - package-ecosystem: docker-compose
+    directory: /deployment/docker
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+    labels: [dependencies, infrastructure]
+    commit-message:
+      prefix: "build"

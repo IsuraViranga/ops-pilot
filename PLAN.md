@@ -631,7 +631,14 @@ Pull Request ─► lint ─► unit tests ─► integration tests (Testcontain
 | 0 | 5 | Application config, Flyway baseline, working health endpoint | Complete |
 | 0 | 6 | ArchUnit boundary tests + Testcontainers integration tests | Complete |
 | 0 | 7 | Next.js portal with live backend health via a BFF route | Complete |
-| 0 | 8 | GitHub Actions CI pipeline | Next |
+| 0 | 8 | GitHub Actions CI, SBOM generation, dependency scanning, Dependabot | Complete |
+
+**Phase 0 exit criteria met.** `docker compose up` starts the backing services, the backend
+starts and migrates the schema, the portal renders live backend health, and CI enforces the
+whole gate on every pull request. Boundary enforcement is demonstrably working: a
+deliberate violation fails the build with a message naming ADR-0001.
+
+**Next: Phase 1 — Identity & Authorization.**
 
 ### Notes from Spring Boot 4 migration
 
@@ -641,6 +648,19 @@ module must be a declared dependency. This surfaced as **Flyway silently never r
 the application started, `/actuator/health` reported `UP`, and the schema was empty.
 Part 6 adds an integration test that asserts the migration actually applied, because a
 green health check did not catch it.
+
+Other consequences of the same modularisation: Spring Boot 4's BOM no longer manages
+Testcontainers, `TestRestTemplate` has been removed, and Jackson 3 dropped the
+`WRITE_DATES_AS_TIMESTAMPS` setting.
+
+### Security overrides
+
+| Dependency | Managed version | Pinned to | Reason |
+|---|---|---|---|
+| `tomcat-embed-core` | 11.0.24 (Spring Boot 4.1.1) | 11.0.26 | CVE-2026-65182, CVE-2026-65905, CVE-2026-68525 — three CRITICAL authentication and authorization bypasses in the servlet container, which sits in front of every Spring Security rule. Found by the CI dependency scan before the first push |
+
+Remove an override once an upstream release carries the fix. The scan in CI is what keeps
+this table honest.
 
 ---
 

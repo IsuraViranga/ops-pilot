@@ -51,6 +51,21 @@
         <!-- Minimum build tooling -->
         <required.maven.version>3.9.0</required.maven.version>
 
+        <!--
+          Security override of a version managed by the Spring Boot BOM.
+
+          Spring Boot 4.1.1 pins tomcat-embed-core 11.0.24, which has three CRITICAL
+          advisories: CVE-2026-65182 (security constraint bypass), CVE-2026-65905
+          (DIGEST authentication replay) and CVE-2026-68525 (FORM authentication
+          bypass). All three are authentication or authorization bypasses in the
+          servlet container, so they sit in front of every Spring Security rule we
+          will write in Phase 1.
+
+          Remove this override once a Spring Boot release ships 11.0.25 or later;
+          the dependency scan in CI will keep us honest either way.
+        -->
+        <tomcat.version>11.0.26</tomcat.version>
+
         <!-- Library versions not managed by the Spring Boot BOM -->
         <archunit.version>1.5.0</archunit.version>
         <mapstruct.version>1.6.3</mapstruct.version>
@@ -64,6 +79,7 @@
         <checkstyle.version>14.1.0</checkstyle.version>
         <jacoco.version>0.8.15</jacoco.version>
         <enforcer.version>3.6.3</enforcer.version>
+        <cyclonedx.version>2.9.3</cyclonedx.version>
 
         <!-- Quality gate -->
         <jacoco.line.coverage>0.75</jacoco.line.coverage>
@@ -417,6 +433,50 @@
     </build>
 
     <profiles>
+        <!--
+          `./mvnw -Psbom package` - produce a CycloneDX software bill of materials
+          listing every resolved dependency, which CI then scans for known
+          vulnerabilities.
+
+          Scanning a Maven project directly would make the scanner resolve every POM
+          from Maven Central itself, which is slow and gets rate-limited (HTTP 429).
+          Generating the SBOM from the build, where the dependency tree is already
+          resolved and cached, makes the scan fast, offline and deterministic.
+
+          Kept in a profile so a normal local build stays quick.
+        -->
+        <profile>
+            <id>sbom</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.cyclonedx</groupId>
+                        <artifactId>cyclonedx-maven-plugin</artifactId>
+                        <version>${cyclonedx.version}</version>
+                        <configuration>
+                            <projectType>application</projectType>
+                            <schemaVersion>1.6</schemaVersion>
+                            <outputFormat>json</outputFormat>
+                            <outputName>opspilot-sbom</outputName>
+                            <!-- Test-only dependencies are not shipped, so a CVE in one
+                                 is not a production exposure. -->
+                            <includeTestScope>false</includeTestScope>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>generate-sbom</id>
+                                <goals>
+                                    <!-- One document for the whole reactor, not nine. -->
+                                    <goal>makeAggregateBom</goal>
+                                </goals>
+                                <phase>package</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
         <!--
           `./mvnw -Pfast` - skip the quality gates during a tight edit-compile loop.
           CI never uses this profile.

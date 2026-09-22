@@ -55,6 +55,9 @@ cd ../../deployment/docker && docker compose up -d
 # Fast loop while developing - skips formatting, Checkstyle, coverage and ITs
 ./mvnw -Pfast clean install
 
+# Full build plus a CycloneDX SBOM at target/opspilot-sbom.json - what CI runs
+./mvnw -Psbom clean verify
+
 # Unit tests only
 ./mvnw test
 
