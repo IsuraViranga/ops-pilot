@@ -114,7 +114,7 @@ services:
   adminer:
     # Lightweight database browser. Useful for confirming what a migration
     # actually did, without installing a desktop client.
-    image: adminer:6.0.1
+    image: adminer:6.1.1
     container_name: opspilot-adminer
     restart: unless-stopped
     environment:
