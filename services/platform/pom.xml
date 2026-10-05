@@ -67,16 +67,16 @@
         <tomcat.version>11.0.26</tomcat.version>
 
         <!-- Library versions not managed by the Spring Boot BOM -->
-        <archunit.version>1.5.0</archunit.version>
+        <archunit.version>1.5.1</archunit.version>
         <mapstruct.version>1.6.3</mapstruct.version>
         <!-- Spring Boot 4 no longer manages Testcontainers, so its BOM is imported below. -->
         <testcontainers.version>2.0.5</testcontainers.version>
 
         <!-- Build plugin versions - pinned so the build is reproducible -->
-        <spotless.version>3.10.2</spotless.version>
+        <spotless.version>3.10.3</spotless.version>
         <palantir-java-format.version>2.98.0</palantir-java-format.version>
         <checkstyle.plugin.version>3.6.0</checkstyle.plugin.version>
-        <checkstyle.version>14.1.0</checkstyle.version>
+        <checkstyle.version>14.3.0</checkstyle.version>
         <jacoco.version>0.8.15</jacoco.version>
         <enforcer.version>3.6.3</enforcer.version>
         <cyclonedx.version>2.9.3</cyclonedx.version>
